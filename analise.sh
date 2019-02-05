@@ -37,31 +37,9 @@ echo "Binarizando o atributo num_gestacoes"
 mv $TRAINFILE $TEMPTRAINFILE && mv $TESTFILE $TEMPTESTFILE
 $CMD weka.filters.unsupervised.attribute.NumericToBinary -R 2 $IOTRAIN
 $CMD weka.filters.unsupervised.attribute.NumericToBinary -R 2 $IOTEST
-$CMD weka.filters.unsupervised.attribute.RenameAttribute -find \(.*\) -replace num_gestacoes -R 2 $IOTRAIN
-$CMD weka.filters.unsupervised.attribute.RenameAttribute -find \(.*\) -replace num_gestacoes -R 2 $IOTEST
-
-# Os passos abaixo foram comentados porque o algoritmo usado já faz o tratamento de missing values e normalização
-
-#echo "Convertendo zeros em missing values nos campos 'pressao sanguinea' e 'bmi'"
-#mv $TRAINFILE $TEMPTRAINFILE && mv $TESTFILE $TEMPTESTFILE
-#$CMD weka.filters.unsupervised.attribute.NumericCleaner -min 1.0 -min-default NaN -R 4,7 -decimals -1 $IOTRAIN
-#$CMD weka.filters.unsupervised.attribute.NumericCleaner -min 1.0 -min-default NaN -R 4,7 -decimals -1 $IOTEST
-
-#echo "Injetando a média nos missing values"
-#mv $TRAINFILE $TEMPTRAINFILE && mv $TESTFILE $TEMPTESTFILE
-#$CMD weka.filters.unsupervised.attribute.ReplaceMissingValues $IOTRAIN
-#$CMD weka.filters.unsupervised.attribute.ReplaceMissingValues $IOTEST
-
-#echo "Normalizando dados dos atributos"
-#mv $TRAINFILE $TEMPTRAINFILE && mv $TESTFILE $TEMPTESTFILE
-#$CMD weka.filters.unsupervised.attribute.Normalize -S 1.0 -T 0.0 $IOTRAIN
-#$CMD weka.filters.unsupervised.attribute.Normalize -S 1.0 -T 0.0 $IOTEST
 
 echo "Aplicando algoritmo..."
 rm -f $TEMPTRAINFILE $TEMPTESTFILE
-$CMD weka.classifiers.meta.FilteredClassifier -classifications "$PREDICTIONS" $FILTRO -F "weka.filters.unsupervised.attribute.Remove -R 1,6-9" -S 36 -W weka.classifiers.functions.SGD -- -F 0 -L 0.01 -R 1.0E-4 -E 500 -C 0.001 -S 1 > /dev/null
+$CMD weka.classifiers.meta.FilteredClassifier $FILTRO -F "weka.filters.unsupervised.attribute.Remove -R 1,6-9" -S 36 -W weka.classifiers.functions.SGD -- -F 0 -L 0.01 -R 1.0E-4 -E 500 -C 0.001 -S 1
 
-echo "Gerando $SUBMISSIONFILE para o kaggle"
-cat predictions.csv | awk '!/^$/' | awk -F, '{!/^$/;gsub("predicted","classe",$3);gsub("1:|2:","",$3); print $6","$3}' > $SUBMISSIONFILE
-rm -f predictions.csv
-echo "Para submeter o arquivo, execute: kaggle competitions submit -c competicao-dsa-machine-learning-jan-2019 -f $SUBMISSIONFILE -m 'MENSAGEM'"
+$CMD weka.classifiers.meta.FilteredClassifier -classifications "$PREDICTIONS" $FILTRO -F "weka.filters.unsupervised.attribute.Remove -R 1,6-9" -S 36 -W weka.classifiers.functions.SGD -- -F 0 -L 0.01 -R 1.0E-4 -E 500 -C 0.001 -S 1
